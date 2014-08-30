@@ -1,0 +1,81 @@
+<html>
+
+<head>
+    <title>Megachat</title>
+    <script src="js/jquery.js"></script>
+    <script src="socket.io/socket.io.js"></script>
+</head>
+
+<body>
+    <form id="chat_form">
+        <input type="text" placeholder="Who are you" id="user">
+        <input type="text" placeholder="What do you want" id="message">
+        <input id="submit_form" type="submit" value="Send">
+    </form>
+    <div id="entries">
+    </div>
+    <script type="application/javascript">
+        $(document).ready(function () {
+            $("#chat_form").submit(function (event) {
+                event.preventDefault(); // Make sure that the page does not reload
+
+                var msg = {
+                    user: $("#user").val(),
+                    message: $("#message").val()
+                };
+
+                var json = JSON.stringify(msg);
+
+                console.log(json);
+
+                $.ajax("/messages", {
+                    type: 'POST',
+                    data: json,
+                    contentType: "application/json",
+                    success: function (data) {
+                        console.log(data);
+                    },
+                    statusCode: {
+                        400: function () {
+                            alert('Could not post message');
+                        }
+                    }
+                });
+
+            });
+        });
+    </script>
+
+    <script type="application/javascript">
+        function insertMessage(message) {
+            var element = "<div class='entry'><div class='user'>"+message.user+"</div><div class='message'>"+message.message+"</div></div>";
+
+            $(element).appendTo('#entries');
+        };
+
+    </script>
+
+    <script>
+        var socket = io();
+
+        socket.on('disconnect', function() {
+            alert('connection lost');
+            $('#entries').empty();
+        });
+
+        socket.on('greet', function(messages) {
+
+            for(var i=0;i<messages.length;i++) {
+                insertMessage(messages[i]);
+            }
+        });
+
+        socket.on('chat_message', function(msg) {
+            insertMessage(msg);
+        });
+
+        console.log(socket);
+    </script>
+</body>
+
+</html>
